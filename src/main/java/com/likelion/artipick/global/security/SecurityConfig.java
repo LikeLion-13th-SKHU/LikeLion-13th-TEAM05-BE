@@ -35,7 +35,7 @@ public class SecurityConfig {
                                 "/swagger-resources/**", "/webjars/**",
                                 "/auth/login", "/auth/reissue"
                         ).permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/**").permitAll() //임시 수정
                         .anyRequest().authenticated()
                 );
 //                .addFilterBefore(jwtAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class);
