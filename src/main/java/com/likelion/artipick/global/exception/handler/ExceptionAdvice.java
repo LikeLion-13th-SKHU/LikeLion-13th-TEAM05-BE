@@ -1,124 +1,42 @@
 package com.likelion.artipick.global.exception.handler;
 
 import com.likelion.artipick.global.code.BaseErrorCode;
+import com.likelion.artipick.global.code.CommonErrorCode;
 import com.likelion.artipick.global.code.dto.ApiResponse;
-import com.likelion.artipick.global.code.status.ErrorStatus;
-import com.likelion.artipick.global.exception.GeneralException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
+import com.likelion.artipick.global.exception.BaseException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+@RestControllerAdvice
+public class ExceptionAdvice {
 
-@RestControllerAdvice(annotations = RestController.class)
-public class ExceptionAdvice extends ResponseEntityExceptionHandler {
-
-    // Bean Validation @Valid 오류
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request) {
-
-        Map<String, String> errors = new LinkedHashMap<>();
-        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
-            String msg = Optional.ofNullable(fe.getDefaultMessage()).orElse("");
-            errors.merge(fe.getField(), msg, (a, b) -> a + ", " + b);
-        }
-
-        ApiResponse<Map<String, String>> body =
-                ApiResponse.of(ErrorStatus.VALIDATION_FAILED, errors);
-
+    /** 우리 쪽에서 명시적으로 던진 예외 */
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBase(BaseException e) {
+        BaseErrorCode code = e.getErrorCode();
         return ResponseEntity
-                .status(ErrorStatus.VALIDATION_FAILED.getHttpStatus())
-                .headers(headers)
-                .body(body);
+                .status(code.getHttpStatus())
+                .body(code.toResponse(null));
     }
 
-    // @RequestParam 누락
-    @Override
-    protected ResponseEntity<Object> handleMissingServletRequestParameter(
-            MissingServletRequestParameterException ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request) {
-
-        ApiResponse<Void> body =
-                ApiResponse.of(ErrorStatus.MISSING_PARAMETER, null);
-
+    /** @Valid 실패 등 바인딩/검증 오류 */
+    @ExceptionHandler({ MethodArgumentNotValidException.class, BindException.class, IllegalArgumentException.class })
+    public ResponseEntity<ApiResponse<Void>> handleValidation(Exception e) {
+        BaseErrorCode code = CommonErrorCode.INVALID_INPUT;
         return ResponseEntity
-                .status(ErrorStatus.MISSING_PARAMETER.getHttpStatus())
-                .headers(headers)
-                .body(body);
+                .status(code.getHttpStatus())
+                .body(code.toResponse(null));
     }
 
-    // 잘못된 HTTP method
-    @Override
-    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(
-            HttpRequestMethodNotSupportedException ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request) {
-
-        ApiResponse<Void> body =
-                ApiResponse.of(ErrorStatus.METHOD_NOT_ALLOWED, null);
-
-        return ResponseEntity
-                .status(ErrorStatus.METHOD_NOT_ALLOWED.getHttpStatus())
-                .headers(headers)
-                .body(body);
-    }
-
-    // RequestParam 검증 실패 시
-    @ExceptionHandler(ConstraintViolationException.class)
-    protected ResponseEntity<Object> handleConstraintViolation(
-            ConstraintViolationException ex,
-            WebRequest request) {
-
-        String code = ex.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .findFirst()
-                .orElse(ErrorStatus.VALIDATION_FAILED.name());
-
-        BaseErrorCode ec = ErrorStatus.valueOf(code);
-        ApiResponse<Void> body = ApiResponse.of(ec, null);
-
-        return ResponseEntity
-                .status(ec.getHttpStatus())
-                .body(body);
-    }
-
-    // 사용자 정의 예외
-    @ExceptionHandler(GeneralException.class)
-    protected ResponseEntity<ApiResponse<Void>> handleGeneral(GeneralException ex) {
-        BaseErrorCode ec = ex.getCode();
-        return ResponseEntity
-                .status(ec.getHttpStatus())
-                .body(ApiResponse.of(ec, null));
-    }
-
-    // 그 외 모든 예외
+    /** 그 외 모든 예외(안전망) */
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ApiResponse<Void>> handleAll(Exception ex, HttpServletRequest req) {
-        ex.printStackTrace();
-        BaseErrorCode ec = ErrorStatus.INTERNAL_SERVER_ERROR;
+    public ResponseEntity<ApiResponse<Void>> handleEtc(Exception e) {
+        BaseErrorCode code = CommonErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity
-                .status(ec.getHttpStatus())
-                .body(ApiResponse.of(ec, null));
+                .status(code.getHttpStatus())
+                .body(code.toResponse(null));
     }
 }
