@@ -2,6 +2,7 @@ package com.likelion.artipick.domain.post.dto;
 
 import com.likelion.artipick.domain.post.Post;
 import com.likelion.artipick.domain.post.Status;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -81,4 +82,16 @@ public class PostDtos {
                     .build();
         }
     }
+
+    @Getter
+    @AllArgsConstructor
+    public static class LocationResponse {
+        private String gpsX; // 경도
+        private String gpsY; // 위도
+
+        public static LocationResponse from(Post post) {
+            return new LocationResponse(post.getGpsX(), post.getGpsY());
+        }
+    }
+
 }
