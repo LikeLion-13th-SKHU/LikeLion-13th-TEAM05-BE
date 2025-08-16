@@ -1,4 +1,4 @@
-package com.likelion.artipick.domain.post.dto;
+package com.likelion.artipick.domain.post.dto.request;
 
 import com.likelion.artipick.domain.post.Status;
 import lombok.Getter;

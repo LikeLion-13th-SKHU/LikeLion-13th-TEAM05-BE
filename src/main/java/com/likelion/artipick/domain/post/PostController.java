@@ -4,9 +4,9 @@ import com.likelion.artipick.domain.post.dto.PostDtos.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/posts")
@@ -19,25 +19,30 @@ public class PostController {
     // 목록
     @GetMapping
     public ResponseEntity<Page<Response>> list(Pageable pageable) {
-        return ResponseEntity.ok(postService.getList(pageable));
+        Page<Response> response = postService.getList(pageable);
+        return ResponseEntity.ok(response);
+
     }
 
     // 단건 조회
     @GetMapping("/{id}")
     public ResponseEntity<Response> getOne(@PathVariable Long id) {
-        return ResponseEntity.ok(postService.getOne(id));
+        Response response = postService.getOne(id);
+        return ResponseEntity.ok(response);
     }
 
     // 생성
     @PostMapping
     public ResponseEntity<Response> create(@RequestBody CreateRequest req) {
-        return ResponseEntity.ok(postService.create(req));
+        Response response = postService.create(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // 수정
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")  // ✅ 부분 수정 고려
     public ResponseEntity<Response> update(@PathVariable Long id, @RequestBody UpdateRequest req) {
-        return ResponseEntity.ok(postService.update(id, req));
+        Response response = postService.update(id, req);
+        return ResponseEntity.ok(response);
     }
 
     // 삭제(소프트)
@@ -69,9 +74,9 @@ public class PostController {
 
     /* 위치 */
 
-    // 위도·경도
     @GetMapping("/{id}/location")
     public ResponseEntity<LocationResponse> getLocation(@PathVariable Long id) {
         return ResponseEntity.ok(postService.getLocation(id));
     }
 }
+

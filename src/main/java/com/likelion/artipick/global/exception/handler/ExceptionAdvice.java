@@ -1,8 +1,8 @@
 package com.likelion.artipick.global.exception.handler;
 
 import com.likelion.artipick.global.code.BaseErrorCode;
-import com.likelion.artipick.global.code.CommonErrorCode;
 import com.likelion.artipick.global.code.dto.ApiResponse;
+import com.likelion.artipick.global.code.status.ErrorStatus; // ✅ 이거 추가
 import com.likelion.artipick.global.exception.BaseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -25,7 +25,7 @@ public class ExceptionAdvice {
     /** @Valid 실패 등 바인딩/검증 오류 */
     @ExceptionHandler({ MethodArgumentNotValidException.class, BindException.class, IllegalArgumentException.class })
     public ResponseEntity<ApiResponse<Void>> handleValidation(Exception e) {
-        BaseErrorCode code = CommonErrorCode.INVALID_INPUT;
+        BaseErrorCode code = ErrorStatus.VALIDATION_FAILED;
         return ResponseEntity
                 .status(code.getHttpStatus())
                 .body(code.toResponse(null));
@@ -34,7 +34,7 @@ public class ExceptionAdvice {
     /** 그 외 모든 예외(안전망) */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleEtc(Exception e) {
-        BaseErrorCode code = CommonErrorCode.INTERNAL_SERVER_ERROR;
+        BaseErrorCode code = ErrorStatus.INTERNAL_SERVER_ERROR;
         return ResponseEntity
                 .status(code.getHttpStatus())
                 .body(code.toResponse(null));

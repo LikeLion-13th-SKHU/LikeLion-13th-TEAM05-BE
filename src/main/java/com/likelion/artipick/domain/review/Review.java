@@ -2,77 +2,83 @@ package com.likelion.artipick.domain.review;
 
 import com.likelion.artipick.domain.post.Status;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "reviews")
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 리뷰 내용
+    /** 내용 */
     @Column(nullable = false, length = 1000)
     private String content;
 
-    // 별점 (1~5)
+    /** 별점 (1~5) */
     @Column(nullable = false)
     private int rating;
 
-    // 조회수
+    /** 조회수 */
     @Column(nullable = false)
     private int viewCount = 0;
 
-    // 좋아요 수
+    /** 좋아요 수 */
     @Column(nullable = false)
     private int likeCount = 0;
 
-    // 상태 (ACTIVE, DELETED)
+    /** 상태 */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Status status = Status.ACTIVE;
 
-    // 작성자 ID
+    /** 작성자 ID */
     @Column(nullable = false)
     private Long userId;
 
-    // 작성/수정 시간
-    @Column(nullable = false, updatable = false)
+    /** 생성/수정 시간 */
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // ===== 생성자 & 팩토리 =====
+    protected Review(String content, int rating, Long userId) {
+        this.content = content;
+        this.rating = rating;
+        this.userId = userId;
+    }
+    public static Review of(String content, int rating, Long userId) {
+        return new Review(content, rating, userId);
+    }
+
+    // ===== 비즈니스 메서드 =====
+    public void update(String content, Integer rating) {
+        if (content != null) this.content = content;
+        if (rating != null) this.rating = rating;
+    }
+    public void softDelete() { this.status = Status.DELETED; }
+    public void increaseView() { this.viewCount += 1; }
+    public void increaseLike() { this.likeCount += 1; }
+    public void decreaseLike() { this.likeCount = Math.max(0, this.likeCount - 1); }
+
+    // ===== JPA 라이프사이클 =====
     @PrePersist
-    public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = createdAt;
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // 조회수 증가
-    public void increaseView() {
-        this.viewCount++;
-    }
-
-    // 좋아요 증가
-    public void increaseLike() {
-        this.likeCount++;
-    }
-
-    // 좋아요 감소
-    public void decreaseLike() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

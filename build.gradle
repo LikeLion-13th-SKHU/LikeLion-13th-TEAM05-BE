@@ -41,6 +41,7 @@ dependencies {
     // AWS S3 SDK
     implementation 'software.amazon.awssdk:s3'
     implementation platform('software.amazon.awssdk:bom:2.20.27')
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.named('test') {

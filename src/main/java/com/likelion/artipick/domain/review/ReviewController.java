@@ -1,9 +1,13 @@
 package com.likelion.artipick.domain.review;
 
-import com.likelion.artipick.domain.review.dto.ReviewDtos;
+import com.likelion.artipick.domain.review.dto.request.ReviewCreateRequest;
+import com.likelion.artipick.domain.review.dto.request.ReviewUpdateRequest;
+import com.likelion.artipick.domain.review.dto.response.ReviewResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,34 +18,34 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    // 리뷰 생성
+    /** 생성 */
     @PostMapping
-    public ResponseEntity<ReviewDtos.Response> createReview(@RequestBody ReviewDtos.CreateRequest request) {
-        return ResponseEntity.ok(reviewService.createReview(request));
+    public ResponseEntity<ReviewResponse> createReview(@Valid @RequestBody ReviewCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.createReview(request));
     }
 
-    // 리뷰 목록 조회 (페이징)
+    /** 목록(페이징) */
     @GetMapping
-    public ResponseEntity<Page<ReviewDtos.Response>> getAllReviews(Pageable pageable) {
+    public ResponseEntity<Page<ReviewResponse>> getAllReviews(Pageable pageable) {
         return ResponseEntity.ok(reviewService.getList(pageable));
     }
 
-    // 리뷰 단건 조회
+    /** 단건 */
     @GetMapping("/{id}")
-    public ResponseEntity<ReviewDtos.Response> getReview(@PathVariable Long id) {
+    public ResponseEntity<ReviewResponse> getReview(@PathVariable Long id) {
         return ResponseEntity.ok(reviewService.getReview(id));
     }
 
-    // 리뷰 수정
+    /** 수정 */
     @PutMapping("/{id}")
-    public ResponseEntity<ReviewDtos.Response> updateReview(
+    public ResponseEntity<ReviewResponse> updateReview(
             @PathVariable Long id,
-            @RequestBody ReviewDtos.UpdateRequest request
+            @Valid @RequestBody ReviewUpdateRequest request
     ) {
         return ResponseEntity.ok(reviewService.updateReview(id, request));
     }
 
-    // 리뷰 삭제
+    /** 삭제(소프트) */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
         reviewService.deleteReview(id);

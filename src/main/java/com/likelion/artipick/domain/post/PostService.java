@@ -1,5 +1,7 @@
 package com.likelion.artipick.domain.post;
 
+import com.likelion.artipick.domain.category.Category;
+import com.likelion.artipick.domain.category.CategoryRepository;
 import com.likelion.artipick.domain.post.dto.PostDtos.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,14 +16,19 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final CategoryRepository categoryRepository;
 
     /** 게시글 생성 */
     public Response create(CreateRequest req) {
+        // categoryId로 Category 엔티티 조회
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다. id=" + req.getCategoryId()));
+
         Post post = Post.builder()
                 .title(req.getTitle())
                 .content(req.getContent())
-                .categoryId(req.getCategoryId())
-                .userId(req.getUserId()) // TODO: 인증 붙으면 SecurityContext에서 꺼내기
+                .category(category)   // ✅ categoryId(X) → category(O)
+                .userId(req.getUserId())
                 .build();
 
         Post saved = postRepository.save(post);
@@ -44,7 +51,15 @@ public class PostService {
     /** 수정 */
     public Response update(Long id, UpdateRequest req) {
         Post post = getActivePost(id);
-        post.update(req.getTitle(), req.getContent(), req.getCategoryId(), req.getStatus());
+
+        // categoryId가 들어오면 새 Category 엔티티 조회
+        Category category = null;
+        if (req.getCategoryId() != null) {
+            category = categoryRepository.findById(req.getCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다. id=" + req.getCategoryId()));
+        }
+
+        post.update(req.getTitle(), req.getContent(), category, req.getStatus()); // ✅ category 전달
         return Response.from(post);
     }
 
